@@ -25,4 +25,4 @@ ENV CHECK_INTERVAL 90
 # адреса которые будут исключены из обхода записанные через запятую в формате простых регулярных выражений
 ENV EXCLUDE_URLS '.*github.com'
 
-ENTRYPOINT ["python3", "-u", "crawler/crawler.py", "https://vitkhab.github.io/search_engine_test_site/"]
+CMD ["sh","-c","EXCLUDE_URLS='.*github.com' python -u crawler/crawler.py https://vitkhab.github.io/search_engine_test_site/"]

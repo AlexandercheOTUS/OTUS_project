@@ -13,4 +13,4 @@ ENV MONGO mongodb
 # порт для подключения к mongodb-хосту
 ENV MONGO_PORT 27017
 
-CMD cd ui && FLASK_APP=ui.py gunicorn ui:app -b 0.0.0.0
+CMD ["sh","-c","cd ui && FLASK_APP=ui.py gunicorn ui:app -b 0.0.0.0"]
