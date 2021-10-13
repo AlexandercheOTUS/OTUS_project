@@ -1,0 +1,55 @@
+version: '3.3'
+services:
+  mongodb:
+    env_file: .env
+    image: mongo:${MONGO_VER}
+    container_name: mongodb
+    hostname: mongodb
+    volumes:
+      - mongodb:/data/db
+    networks:
+      - crawler_net
+
+  rabbitmq:
+    env_file: .env
+    image: rabbitmq:${RABBIT_VER}
+    container_name: rabbitmq
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - crawler_net
+
+  crawler:
+    env_file: .env
+    image: ${USER_NAME}/search_engine_crawler:${CRAWLER_VER}
+    container_name: crawler
+    hostname: crawler
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - crawler_net
+
+  ui:
+    env_file: .env
+    image: ${USER_NAME}/search_engine_ui:${UI_VER}
+    container_name: ui
+    hostname: ui
+    ports:
+      - 8000:8000
+    depends_on:
+      - crawler
+    networks:
+      - crawler_net
+
+volumes:
+  mongodb:
+
+networks:
+  crawler_net:
+    name: crawler_net
