@@ -26,6 +26,7 @@ services:
 
   crawler:
     env_file: .env
+    build: ../src/crawler
     image: ${USER_NAME}/search_engine_crawler:${CRAWLER_VER}
     container_name: crawler
     hostname: crawler
@@ -37,6 +38,7 @@ services:
 
   ui:
     env_file: .env
+    build: ../src/ui
     image: ${USER_NAME}/search_engine_ui:${UI_VER}
     container_name: ui
     hostname: ui

@@ -1,0 +1,18 @@
+image:
+  name: tmaier/docker-compose:19.03
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+
+services:
+  - docker:dind
+
+before_script:
+  - docker info
+  - docker-compose --version
+
+build images:
+  stage: build
+  script:
+    - cd docker && cp .env.example .env
+    - docker-compose -f docker-compose.yml build
