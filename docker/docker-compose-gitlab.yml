@@ -1,0 +1,16 @@
+web:
+  env_file: .env.gitlab
+  image: 'gitlab/gitlab-ce:latest'
+  restart: always
+  hostname: 'gitlab.otus.edu'
+  environment:
+    GITLAB_OMNIBUS_CONFIG: |
+      external_url 'http://${GITLAB_IP}'
+  ports:
+    - '80:80'
+    - '443:443'
+    - '2222:22'
+  volumes:
+    - '/srv/gitlab/config:/etc/gitlab'
+    - '/srv/gitlab/logs:/var/log/gitlab'
+    - '/srv/gitlab/data:/var/opt/gitlab'

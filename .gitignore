@@ -3,6 +3,7 @@ build_info.txt
 
 # /docker
 .env
+.env.gitlab
 
 # /terraform
 *.tfstate
