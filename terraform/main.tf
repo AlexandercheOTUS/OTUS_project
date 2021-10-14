@@ -16,14 +16,14 @@ resource "yandex_compute_instance" "yc-default-vm" {
 
   resources {
     cores  = 4
-    memory = 4
+    memory = 8
   }
 
   boot_disk {
     initialize_params {
       # yc compute image list --folder-id standard-images | grep ubuntu-1804-lts
       image_id = var.image_id
-      size     = 15
+      size     = 50
     }
   }
 
