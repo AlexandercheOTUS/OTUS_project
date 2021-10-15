@@ -1,16 +1,33 @@
+stages:
+  - build_images
+  - test_deploy
+  - app_tests
+
 before_script:
   - docker info
   - docker-compose --version
 
 build images:
-  stage: build
+  stage: build_images
   script:
     - cd docker && cp .env.example .env
     - docker-compose -f docker-compose.yml down
     - docker-compose -f docker-compose.yml build
 
-test up:
-  stage: test
+test deploy:
+  stage: test_deploy
   script:
     - cd docker && cp .env.example .env
     - docker-compose -f docker-compose.yml up -d
+
+app tests:
+  stage: app_tests
+  script:
+    - echo "Тестирование приложения Crawler в контейнере search_engine_crawler:latest"
+    - docker exec crawler python -m unittest discover -s tests/
+    - docker exec crawler coverage run -m unittest discover -s tests/
+    - docker exec crawler coverage report --include crawler/crawler.py
+    - echo "Тестирование UI в контейнере search_engine_ui:latest"
+    - docker exec ui python -m unittest discover -s tests/
+    - docker exec ui coverage run -m unittest discover -s tests/
+    - docker exec ui coverage report --include ui/ui.py
