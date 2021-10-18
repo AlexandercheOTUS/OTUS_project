@@ -37,3 +37,72 @@
     - CHANGELOG с описанием выполненной работы
         - Если работа в группе, то пункт включает автора изменений
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
+#### Каталоги проекта:
+1. Каталог src - содержит код приложений crawler и ui. В каждом есть Dockerfile и docker_build.sh для создания контейнера с приложеним.
+Собрать и сохранить контейнеры в Docker Hub можно так:
+```
+$ export USER_NAME=docker_hub_name
+$ docker login
+$ cd src/crawler && bash docker_build.sh && docker push $USER_NAME/search_engine_crawler:latest
+$ cd ../ui && bash docker_build.sh && docker push $USER_NAME/search_engine_ui:latest
+```
+2. Каталог docker - содержит docker-compose.yml для развертывания приложения и docker-compose-gitlab.yml для развертывания gitlab (например на docker-machine), а также примеры .env-файлов с необходимми переменными.
+3. Каталог terraform - содержит main.tf для разворачивания docker-machine в yandex cloud и вспомогательные файлы с примерами необходимых переменных и т.д.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Как развернуть MVP:
+1. Поднимаем docker-machine для gitlab:
+```
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+vi terraform.tfvars - добавить значения переменных для своего yandex cloud. image_id - уже установлен и это Ubuntu 18.04. По vm_name будем подключать docker-machine. Пусть vm_name="yc-gitlab"
+rm -rf terraform.tfstate - при наличии удалить, чтобы развернуть новую машину
+terraform plan
+terraform apply
+```
+
+2. Разворачиваем gitlab:
+```
+eval $(docker-machine env yc-gitlab)
+cd docker
+cp .env.gitlab.example .env.gitlab
+vi .env.gitlab - добавить "белый" IP машины, которую развернули ранее
+docker-compose -f docker-compose-gitlab.yml up -d
+docker exec -it gitlab_web_1 cat /etc/gitlab/initial_root_password | grep Password:
+С этим временным паролем и логином root заходим в GitLab http://<GITLAB_IP>, меняем пароль root, создаем группу OTUS и проект OTUS_project
+git remote add gitlab http://<GITLAB_IP>/otus/otus_project.git
+git push gitlab
+```
+
+3. Поднимаем gitlab ssh runner (на нем будут собираться контейнеы, подниматься приложение и проводиться unittest-ы):
+```
+Поднимаем docker-machine для gitlab ssh runner как описано в пункте 1. Пусть vm_name="yc-gitlab-runner". Далее подключим эту машину к GitLab как SSH Runner:
+eval $(docker-machine env yc-gitlab-runner)
+docker-machine ssh yc-gitlab-runner
+sudo echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+sudo echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+sudo passwd
+sudo systemctl restart sshd.service
+sudo apt update && apt -y install gitlab-runner docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+sudo gitlab-runner register \
+ --url http://<GITLAB_IP>/ \
+ --non-interactive \
+ --executor ssh \
+ --ssh-host <RUNNER_IP> \
+ --locked=false \
+ --name SSHrunner \
+ --ssh-user root \
+ --ssh-password 'ROOT_PASSWORD' \
+ --ssh-disable-strict-host-key-checking=true \
+ --registration-token GITLAB_TOKEN
+После этого runner можно увидеть здесь: http://<GITLAB_IP>/admin/runners
+```
+
+4. После того как отработает .gitlab-ci.yml приложение будет доступно на IP GitLab runner (у меня это 84.252.129.28):
+UI: http://84.252.129.28:8000/
+RabbitMQ: http://84.252.129.28:15672/
+Метрики: http://84.252.129.28:8000/metrics
+
+P.S. На данный момент CI/CD носит исключительно тестовый характер для MVP. В дальнейшем предполагается развертывание в kuber-кластере.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
