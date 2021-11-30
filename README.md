@@ -47,12 +47,12 @@ $ cd src/crawler && bash docker_build.sh && docker push $USER_NAME/search_engine
 $ cd ../ui && bash docker_build.sh && docker push $USER_NAME/search_engine_ui:latest
 ```
 2. Каталог docker - содержит docker-compose.yml для развертывания приложения и docker-compose-gitlab.yml для развертывания gitlab (например на docker-machine), а также примеры .env-файлов с необходимми переменными.
-3. Каталог terraform - содержит main.tf для разворачивания docker-machine в yandex cloud и вспомогательные файлы с примерами необходимых переменных и т.д.
+3. Каталог terraform - содержит файлы main.tf для разворачивания docker-machine и kuber cluster в yandex cloud и вспомогательные файлы с примерами необходимых переменных и т.д.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
 Как развернуть MVP:
 1. Поднимаем docker-machine для gitlab:
 ```
-cd terraform
+cd terraform/docker-machine
 cp terraform.tfvars.example terraform.tfvars
 vi terraform.tfvars - добавить значения переменных для своего yandex cloud. image_id - уже установлен и это Ubuntu 18.04. По vm_name будем подключать docker-machine. Пусть vm_name="yc-gitlab"
 rm -rf terraform.tfstate - при наличии удалить, чтобы развернуть новую машину
@@ -104,5 +104,13 @@ UI: http://84.252.129.28:8000/
 RabbitMQ: http://84.252.129.28:15672/
 Метрики: http://84.252.129.28:8000/metrics
 
-P.S. На данный момент CI/CD носит исключительно тестовый характер для MVP. В дальнейшем предполагается развертывание в kuber-кластере.
+5. Поднимаем kuber cluster в yandex cloud (для приложения):
+```
+cd terraform/yandex-kuber
+cp terraform.tfvars.example terraform.tfvars
+vi terraform.tfvars - добавить значения переменных для своего yandex cloud
+rm -rf terraform.tfstate - при наличии удалить, чтобы развернуть новый
+terraform plan
+terraform apply
+```
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
